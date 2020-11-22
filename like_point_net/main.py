@@ -47,7 +47,7 @@ step_feature = []
 while True:
     # get a batch from dataset
     file_path = np.random.choice(files_path)
-    data = get_data_from_file(file_path)[:100]
+    data = get_data_from_file(file_path)
     feature_origin = data[:, :7]
     fluid_part = data[data[:, 6] == 0]
     inputs = fluid_part[:, :6]
