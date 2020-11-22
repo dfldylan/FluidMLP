@@ -4,7 +4,7 @@ import numpy as np
 # Farthest Point Sampling
 class FPS:
     def __init__(self, points):  # [-1, 3]
-        self.points = np.unique(points, axis=0)
+        self.points = points
 
     def get_min_distance(self, a, b):
         distance = []
@@ -67,5 +67,3 @@ def opt_group(indices, pos, radius):
     return group_indices  # [N] -> [M]
 
 
-def interpolate(known_pos_indices, known_feature, unknown_pos_indices, pos_array, out_channel):
-    return current_data
