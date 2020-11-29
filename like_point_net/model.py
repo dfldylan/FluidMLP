@@ -1,29 +1,31 @@
+from abc import ABC
+
 import tensorflow as tf
 import itertools
 from like_point_net.point_util import *
 
 
-class Model(tf.keras.Model):
+class Model(tf.keras.Model, ABC):
     def __init__(self, learning_rate, channel_list, channel_re_list, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.step = tf.Variable(0, trainable=False, dtype=tf.int32, name='step')
         self.optimizer = tf.optimizers.Adam(learning_rate=learning_rate)
         self.conv = []
         for vision in range(len(channel_list)):
-            vision_conv = []
+            self.vision_conv = []
             for each_index in range(len(channel_list[vision])):
-                _conv = tf.keras.layers.Conv1D(channel_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
+                self._conv = tf.keras.layers.Conv1D(channel_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
                                                dtype=tf.double)
-                vision_conv.append(_conv)
-            self.conv.append(vision_conv)
+                self.vision_conv.append(self._conv)
+            self.conv.append(self.vision_conv)
         self.conv_re = []
         for vision in range(len(channel_re_list)):
-            vision_conv = []
+            self.vision_conv = []
             for each_index in range(len(channel_re_list[vision])):
-                _conv = tf.keras.layers.Conv1D(channel_re_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
+                self._conv = tf.keras.layers.Conv1D(channel_re_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
                                                dtype=tf.double)
-                vision_conv.append(_conv)
-            self.conv_re.append(vision_conv)
+                self.vision_conv.append(self._conv)
+            self.conv_re.append(self.vision_conv)
 
     def call(self, inputs, training=None, mask=None):
         feature_origin = inputs

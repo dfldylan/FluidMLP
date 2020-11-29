@@ -19,7 +19,7 @@ files_path = find_files(sample_path)
 # initialize the model
 model = Model(learning_rate=learning_rate, channel_list=channel_list, channel_re_list=channel_re_list)
 
-checkpoint = tf.train.Checkpoint(paras=model.variables())
+checkpoint = tf.train.Checkpoint(model=model)
 if tf.train.latest_checkpoint(save_path) is not None:
     checkpoint.restore(tf.train.latest_checkpoint(save_path))
 
@@ -41,8 +41,8 @@ while True:
         # loss
         loss = tf.math.reduce_mean(tf.square(current_data - feature_origin[:, 3:7]))
 
-    grads = t.gradient(loss, model.trainable_variables())
-    model.optimizer.apply_gradients(zip(grads, model.trainable_variables()))
+    grads = t.gradient(loss, model.variables)
+    model.optimizer.apply_gradients(zip(grads, model.variables))
     # print and save
     step += 1
     print(str(step) + ': ' + str(loss))
