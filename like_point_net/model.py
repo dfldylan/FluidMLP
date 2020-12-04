@@ -14,16 +14,15 @@ class Model(tf.keras.Model, ABC):
         for vision in range(len(channel_list)):
             self.vision_conv = []
             for each_index in range(len(channel_list[vision])):
-                self._conv = tf.keras.layers.Conv1D(channel_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
-                                               dtype=tf.double)
+                self._conv = tf.keras.layers.Conv1D(channel_list[vision][each_index], [1], [1], activation=tf.nn.tanh)
                 self.vision_conv.append(self._conv)
             self.conv.append(self.vision_conv)
         self.conv_re = []
         for vision in range(len(channel_re_list)):
             self.vision_conv = []
             for each_index in range(len(channel_re_list[vision])):
-                self._conv = tf.keras.layers.Conv1D(channel_re_list[vision][each_index], [1], [1], activation=tf.nn.tanh,
-                                               dtype=tf.double)
+                self._conv = tf.keras.layers.Conv1D(channel_re_list[vision][each_index], [1], [1],
+                                                    activation=tf.nn.tanh)
                 self.vision_conv.append(self._conv)
             self.conv_re.append(self.vision_conv)
 
@@ -45,7 +44,7 @@ class Model(tf.keras.Model, ABC):
                     np.ceil(current_data.shape[0] / vision_factor)))  # todo how many particles in every vision?
                 _, indices, max_distance = FPS(current_data[:, :3]).compute_fps(sample_particles_num)  # [N]
                 # group
-                group_indices = opt_group(indices, current_data[:, :3], radius=max_distance)  # [N] -> [M]
+                group_indices = opt_group(indices, current_data[:, :3], radius=2 * max_distance)  # [N] -> [M]
 
             sample_particle_indices_relative.append(indices)
 
@@ -64,8 +63,8 @@ class Model(tf.keras.Model, ABC):
                 feature_list.append(tf.concat((center_pos, tf.math.reduce_max(feature[0], axis=0)), axis=0))
 
             current_data = tf.stack(feature_list)
-            self.step_feature.append(current_data)
-        self.global_feature = current_data  # [1, F3]
+            # self.step_feature.append(current_data)
+        self.global_feature = current_data[:, 3:]  # [1, 2048]
         current_data = self.global_feature
 
         # calculate the absolute indices
@@ -94,16 +93,21 @@ class Model(tf.keras.Model, ABC):
             for each_uk_pos in uk_pos:  # [N']
                 # calculate distance with each k_pos
                 distance = tf.linalg.norm(k_pos - each_uk_pos, 2, axis=1)  # [N]
-                # select particles with knn(3)
-                select_indices = np.argpartition(distance, [1, 2, 3])[1:4]  # [3]
-                # weighted sum
-                weighted_sum = 0
-                for i in range(3):
-                    weighted_sum = weighted_sum + known_feature[select_indices[i]] / distance[select_indices[i]]
+                if vision == 3:
+                    weighted_sum = known_feature[0]
+                else:
+                    # select particles with knn(3)
+                    select_indices = np.argpartition(distance, [0, 1, 2])[0:3]  # [3]
+                    # weighted sum
+                    weighted_sum = 0
+                    factor = tf.Variable([1/tf.reduce_max([distance[i], 1e-10]) for i in select_indices])
+                    factor_sum = tf.reduce_sum(factor)
+                    factor = factor / factor_sum
+                    for i in range(3):
+                        weighted_sum = weighted_sum + known_feature[select_indices[i]] * factor[i]
                 uk_feature_interpolate.append(weighted_sum)
-            uk_feature = tf.expand_dims(tf.stack(uk_feature_interpolate), axis=0)  # [1, N', F]
+            uk_feature = tf.expand_dims(tf.concat((uk_pos, tf.stack(uk_feature_interpolate)), axis=1), axis=0)   # [1, N', F]
             for single_layer in range(2):
-                uk_feature = self.conv_re[vision][single_layer](uk_feature)
+                uk_feature = self.conv_re[3 - vision][single_layer](uk_feature)
             current_data = uk_feature[0]  # [N', F']
-        # current_data = tf.concat((pos_array, current_data), axis=1)  # [N', 7]
         return current_data

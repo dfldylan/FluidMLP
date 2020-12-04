@@ -2,7 +2,7 @@ from like_point_net.model import *
 from files import *
 
 learning_rate = 0.01
-sample_path = r'D:\data\sample\scene1'
+sample_path = r'D:\dufeilong\data\sample\scene1'
 save_path = r'./like_point_net/save'
 channel_list = [[64, 64, 128],
                 [128, 256, 512],
