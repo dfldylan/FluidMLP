@@ -11,9 +11,9 @@ class DataSet(object):
         sample_folder = cfg.sample_folder
         self.files = find_files(sample_folder)
 
-    def next_particles(self, batch=cfg.batch):
+    def next_particles(self, pool=None, batch=cfg.batch):
         self.current_file = random.choice(self.files)
-        print(self.current_file)
+        # print(self.current_file)
         self.current_data = get_data_from_file(self.current_file, voxel_size=cfg.voxel_size)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] == 0
@@ -21,7 +21,7 @@ class DataSet(object):
         fluid_num = self.fluid_indices.shape[0]
 
         select_num = min(batch, fluid_num)
-        ret = Pool().map(self._find_neighbor, range(select_num))  # [(m1, cp1, i1), (m2, cp2, i2)...]
+        ret = pool.map(self._find_neighbor, range(select_num))  # [(m1, cp1, i1), (m2, cp2, i2)...]
         return np.array([item[0] for item in ret]), np.array([item[1] for item in ret]), np.array(
             [item[2] for item in ret]), self.current_data
 
