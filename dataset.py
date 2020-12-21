@@ -13,6 +13,7 @@ class DataSet(object):
 
     def next_particles(self, batch=cfg.batch):
         self.current_file = random.choice(self.files)
+        print(self.current_file)
         self.current_data = get_data_from_file(self.current_file, voxel_size=cfg.voxel_size)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] == 0
