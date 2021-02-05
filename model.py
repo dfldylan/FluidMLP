@@ -6,6 +6,10 @@ def loss(pred, truth):
     return tf.reduce_mean(tf.square(pred - truth))
 
 
+def pred(model, inputs):
+    return model(inputs)
+
+
 def train(model, inputs, outputs, optimizer):
     with tf.GradientTape() as t:
         current_loss = loss(model(inputs), outputs)
@@ -27,29 +31,7 @@ class SlowFluidNet(tf.keras.Model):
         self.solid_fcn1 = tf.keras.layers.Dense(9, input_shape=(None, 18), activation=tf.keras.activations.tanh)
         self.solid_fcn2 = tf.keras.layers.Dense(6, input_shape=(None, 9), activation=tf.keras.activations.tanh)
         self.solid_fcn3 = tf.keras.layers.Dense(3, input_shape=(None, 6))
-        # self.variables = [self.fluid_fcn0, self.fluid_fcn1, self.fluid_fcn2, self.fluid_fcn3, self.solid_fcn0,
-        #                   self.solid_fcn1, self.solid_fcn2, self.solid_fcn3]
 
-    # def __call__(self, inputs):  # (-1, 6) (-1, 3) (6,)
-    #     neigh_fluid, neigh_solid, center_property = inputs
-    #     center_property = np.expand_dims(center_property, axis=0)  # (1, 6)
-    #     neigh_fluid[:, :3] = neigh_fluid[:, :3] - center_property[:, :3]
-    #     neigh_solid = neigh_solid - center_property[:, :3]
-    #     neigh_fluid = np.concatenate((neigh_fluid, np.tile(center_property[:, 3:], (neigh_fluid.shape[0], 1))),
-    #                                  axis=1)  # (-1, 9)
-    #     neigh_solid = np.concatenate((neigh_solid, np.tile(center_property[:, 3:], (neigh_solid.shape[0], 1))),
-    #                                  axis=1)  # (-1, 6)
-    #
-    #     x = self.fluid_fcn0(neigh_fluid)
-    #     x = self.fluid_fcn1(x)
-    #     x = self.fluid_fcn2(x)
-    #     x = self.fluid_fcn3(x)
-    #     y = self.solid_fcn0(neigh_solid)
-    #     y = self.solid_fcn1(y)
-    #     y = self.solid_fcn2(y)
-    #     y = self.solid_fcn3(y)
-    #     pred = tf.reduce_sum(tf.concat([x, y], axis=0), axis=0)  # (3,)
-    #     return pred
     def call(self, inputs, training=None, mask=None):  # [(m1, cp1), (m2, cp2)...]
         mask, center_particle, current_data = inputs
         self.data = current_data
@@ -77,4 +59,6 @@ class SlowFluidNet(tf.keras.Model):
         y = self.solid_fcn2(y)
         y = self.solid_fcn3(y)
         pred = tf.reduce_sum(tf.concat([x, y], axis=0), axis=0)  # (3,)
+        # if acc instead of vel
+        # pred = tf.constant([0, -9.8, 0], shape=[3, ]) + pred  # (3,)
         return pred

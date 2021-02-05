@@ -4,7 +4,11 @@ import os
 import random
 
 
-def build_data(pos, vel, s_f, out, voxel_size):
+def build_data(table_data, voxel_size=None):
+    pos, vel, s_f = table_data[:, :3], table_data[:, 3:6], table_data[:, 7:8]
+    # out = table_data[:, 12:15] - table_data[:, 3:6]
+    out = table_data[:, 12:15]
+
     if voxel_size:
         voxel = np.floor(pos * (1 / voxel_size)).astype(int)
     else:
@@ -13,17 +17,17 @@ def build_data(pos, vel, s_f, out, voxel_size):
     return data
 
 
-def get_data_from_file(file_path, voxel_size=None):
+def get_data_from_file(file_path):
     df = pd.read_csv(file_path, dtype=float)
     df['isFluidSolid'] = df['isFluidSolid'].astype(int)
-    return build_data(df.iloc[:, :3].values, df.iloc[:, 3:6].values, df.iloc[:, 7:8].values,
-                      df.iloc[:, 12:15].values - df.iloc[:, 3:6].values, voxel_size)
+    return df.values
 
 
 def find_files(root_path):
     folders_path = [os.path.join(root_path, item) for item in os.listdir(root_path) if len(item.split(r'.')) < 2]
     files_path = [os.path.join(item, file) for item in folders_path for file in os.listdir(item) if
-                  file.split(r'.')[-1] == 'csv']
+                  file.split(r'.')[-1] == 'csv' and int(file.split(r'_')[-1].split(r'.')[0]) >= 300 and int(
+                      file.split(r'_')[-1].split(r'.')[0]) < 500]
     # random.shuffle(files_path)
     return files_path
 
