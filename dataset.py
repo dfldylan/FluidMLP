@@ -1,7 +1,7 @@
 import numpy as np
 import config as cfg
 from files import *
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool
 
 
 # import random
@@ -14,7 +14,8 @@ class DataSet(object):
     def next_particles(self, pool=None, batch=cfg.batch):
         self.current_file = random.choice(self.files)
         # print(self.current_file)
-        self.current_data = build_data(get_data_from_file(self.current_file), voxel_size=cfg.voxel_size)
+        self.current_data = build_data(get_data_from_file(self.current_file), voxel_size=cfg.voxel_size,
+                                       target_vel=cfg.target_vel, dt=cfg.dt)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] == 0
         self.fluid_indices = np.where(fluid_mask)[0]
@@ -49,7 +50,8 @@ class DataSet(object):
     # build every particles for specific csv_path
     def get_fps_full_particles(self, file_path, pool=None):
         self.current_file = file_path
-        self.current_data = build_data(get_data_from_file(self.current_file), voxel_size=cfg.voxel_size)
+        self.current_data = build_data(get_data_from_file(self.current_file), voxel_size=cfg.voxel_size,
+                                       target_vel=cfg.target_vel, dt=cfg.dt)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] == 0
         self.fluid_indices = np.where(fluid_mask)[0]
@@ -58,7 +60,6 @@ class DataSet(object):
         ret = pool.map(self._find_neighbor_all, self.fluid_indices)  # [(m1, cp1, i1), (m2, cp2, i2)...]
         return np.array([item[0] for item in ret]), np.array([item[1] for item in ret]), np.array(
             [item[2] for item in ret]), self.current_data
-
 
 
 if __name__ == '__main__':

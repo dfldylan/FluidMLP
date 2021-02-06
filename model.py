@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import config as cfg
 
 
 def loss(pred, truth):
@@ -60,5 +61,20 @@ class SlowFluidNet(tf.keras.Model):
         y = self.solid_fcn3(y)
         pred = tf.reduce_sum(tf.concat([x, y], axis=0), axis=0)  # (3,)
         # if acc instead of vel
-        # pred = tf.constant([0, -9.8, 0], shape=[3, ]) + pred  # (3,)
+        if not cfg.target_vel:
+            pred = tf.constant([0, -9.8, 0], shape=[3, ]) + pred  # (3,)
         return pred
+
+    def pred(self, fluid_part, solid_part):
+        with tf.device('/gpu:0'):
+            y = self.solid_fcn0(solid_part)
+            y = self.solid_fcn1(y)
+            y = self.solid_fcn2(y)
+            y = self.solid_fcn3(y)
+
+        with tf.device('/gpu:1'):
+            x = self.fluid_fcn0(fluid_part)
+            x = self.fluid_fcn1(x)
+            x = self.fluid_fcn2(x)
+            x = self.fluid_fcn3(x)
+        return x, y

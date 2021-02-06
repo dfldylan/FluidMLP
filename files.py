@@ -4,10 +4,16 @@ import os
 import random
 
 
-def build_data(table_data, voxel_size=None):
+def build_data(table_data, voxel_size=None, no_out=False, dt=None, target_vel=False):
     pos, vel, s_f = table_data[:, :3], table_data[:, 3:6], table_data[:, 7:8]
-    # out = table_data[:, 12:15] - table_data[:, 3:6]
-    out = table_data[:, 12:15]
+    if no_out:
+        out = np.zeros_like(pos)
+    else:
+        out = table_data[:, 12:15]
+        # accel instead of vel
+        if not target_vel:
+            out -= table_data[:, 3:6]
+            out /= dt
 
     if voxel_size:
         voxel = np.floor(pos * (1 / voxel_size)).astype(int)
