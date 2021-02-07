@@ -32,8 +32,7 @@ def get_data_from_file(file_path):
 def find_files(root_path):
     folders_path = [os.path.join(root_path, item) for item in os.listdir(root_path) if len(item.split(r'.')) < 2]
     files_path = [os.path.join(item, file) for item in folders_path for file in os.listdir(item) if
-                  file.split(r'.')[-1] == 'csv' and int(file.split(r'_')[-1].split(r'.')[0]) >= 300 and int(
-                      file.split(r'_')[-1].split(r'.')[0]) < 500]
+                  file.split(r'.')[-1] == 'csv']
     # random.shuffle(files_path)
     return files_path
 

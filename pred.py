@@ -7,6 +7,7 @@ import shutil
 batch_size = 2 ** 24
 pred_fps = 200
 start_csv = r'D:\dufeilong\data\sample\scene1\1\all_particles_300.csv'
+output_folder = r'D:\dufeilong\自己论文\2速度与加速度-长序\加速度'
 
 
 def get_particle_neighbor_all(index):
@@ -20,11 +21,19 @@ def get_particle_neighbor_all(index):
 
 
 def build_particle_data(index):
-    neighbor_data = data[fluid_particles_neighbor_indices[index], :7]
-    neighbor_data[:, :3] -= data[fluid_indices[index], :3]
-    fluid_part = neighbor_data[neighbor_data[:, :6] == 0, :6]
-    solid_part = neighbor_data[neighbor_data[:, :6] == 1, :3]
+    neighbor_data = data[fluid_particles_neighbor_indices[index], :7]  # (-1, 7)
+    center_data =  data[fluid_indices[index]]  # (13,)
+    neighbor_data[:, :3] -= center_data[:3]
+    fluid_part = neighbor_data[neighbor_data[:, 6]==0, :6]
+    solid_part = neighbor_data[neighbor_data[:, 6]==1, :3]
+    fluid_part = np.concatenate((fluid_part, np.broadcast_to(center_data[3:6], (fluid_part.shape[0],3))), axis=1)
+    solid_part = np.concatenate((solid_part, np.broadcast_to(center_data[3:6], (solid_part.shape[0],3))), axis=1)
+
     return fluid_part, solid_part, fluid_part.shape[0], solid_part.shape[0]
+
+
+def add_sum(tup):
+    return np.sum(np.concatenate(tup, axis=0), axis=0)
 
 
 if __name__ == '__main__':
@@ -51,6 +60,8 @@ if __name__ == '__main__':
     pred_folder = r'./pred/' + id
     os.makedirs(pred_folder, exist_ok=True)
     shutil.copy(start_csv, pred_folder)
+    if output_folder is not None:
+        shutil.copy(start_csv, output_folder)
     df_log = pd.read_csv(r'./pred/log.csv')
     df_log = df_log.append({'csv_path': start_csv, 'id': id}, ignore_index=True)
     df_log.drop_duplicates().to_csv(r'./pred/log.csv', index=False)
@@ -63,7 +74,7 @@ if __name__ == '__main__':
 
         # build voxel dict
         voxel_indices = data[:, -3:]
-        data_keys = list(map(str, voxel_indices))
+        data_keys = pool.map(str, voxel_indices)
         ds = pd.Series(data_keys)
         voxel_dict = dict(ds.groupby(ds).groups)
 
@@ -97,13 +108,13 @@ if __name__ == '__main__':
 
             ret_fluid, ret_solid = model.pred(fluid_part=np.vstack(batch_fluid_data), solid_part=np.vstack(batch_solid_data))
             # split ret via batch_counter to ret_list  # [(-1,3), (-1,3) ...]
-            batch_fluid_counter = np.cumsum(batch_fluid_counter).tolist()
-            batch_solid_counter = np.cumsum(batch_solid_counter).tolist()
+            batch_fluid_counter = np.cumsum(batch_fluid_counter)
+            batch_solid_counter = np.cumsum(batch_solid_counter)
             ret_fluid = np.split(ret_fluid, batch_fluid_counter)
             ret_solid = np.split(ret_solid, batch_solid_counter)
             # add sum (-1, 3) and append to result_list
-            ret = [np.sum(np.concatenate(tup,axis=0),axis=0)  for tup in zip(ret_fluid, ret_solid)]   # [3,3,...]
-            result_list.extend(ret)
+            ret = pool.map(add_sum, zip(ret_fluid, ret_solid))   # [3,3,...]
+            result_list.extend(ret[:-1])
 
             if final_flag:
                 break
@@ -133,5 +144,7 @@ if __name__ == '__main__':
         # write csv -- fast mode start
         print(str(fps) + ' ok!')
         df.to_csv(os.path.join(pred_folder, 'all_particles_' + str(fps) + '.csv'), index=False)
+        if output_folder is not None:
+            shutil.copy(os.path.join(pred_folder, 'all_particles_' + str(fps) + '.csv'), output_folder)
         # fast mode end
     print('finished!')
