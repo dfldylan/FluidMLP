@@ -1,7 +1,7 @@
 import numpy as np
 import config as cfg
 from files import *
-from multiprocessing.dummy import Pool
+#
 
 
 # import random
@@ -9,13 +9,13 @@ from multiprocessing.dummy import Pool
 class DataSet(object):
     def __init__(self):
         sample_folder = cfg.sample_folder
-        self.files = find_files(sample_folder)
+        self.files = find_files(sample_folder, range_down=300, range_up=500)
 
     def next_particles(self, pool=None, batch=cfg.batch):
         self.current_file = random.choice(self.files)
         # print(self.current_file)
         self.current_data = build_data(get_data_from_file(self.current_file), voxel_size=cfg.voxel_size,
-                                       target_vel=cfg.target_vel, dt=cfg.dt)
+                                       target_vel=cfg.target_vel, dt=cfg.dt, random_rotate=cfg.random_rotate)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] == 0
         self.fluid_indices = np.where(fluid_mask)[0]

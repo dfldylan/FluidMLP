@@ -13,7 +13,8 @@ def pred(model, inputs):
 
 def train(model, inputs, outputs, optimizer):
     with tf.GradientTape() as t:
-        current_loss = loss(model(inputs), outputs)
+        pred = model(inputs)
+        current_loss = loss(pred, outputs)
         grads = t.gradient(current_loss, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
     # model.global_step = model.global_step + 1
@@ -21,17 +22,17 @@ def train(model, inputs, outputs, optimizer):
 
 
 class SlowFluidNet(tf.keras.Model):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, trainable=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.global_step = tf.Variable(initial_value=0, dtype=tf.int64, name='global_step')
-        self.fluid_fcn0 = tf.keras.layers.Dense(18, input_shape=(None, 9), activation=tf.keras.activations.tanh)
-        self.fluid_fcn1 = tf.keras.layers.Dense(9, input_shape=(None, 18), activation=tf.keras.activations.tanh)
-        self.fluid_fcn2 = tf.keras.layers.Dense(6, input_shape=(None, 9), activation=tf.keras.activations.tanh)
-        self.fluid_fcn3 = tf.keras.layers.Dense(3, input_shape=(None, 6))
-        self.solid_fcn0 = tf.keras.layers.Dense(18, input_shape=(None, 6), activation=tf.keras.activations.tanh)
-        self.solid_fcn1 = tf.keras.layers.Dense(9, input_shape=(None, 18), activation=tf.keras.activations.tanh)
-        self.solid_fcn2 = tf.keras.layers.Dense(6, input_shape=(None, 9), activation=tf.keras.activations.tanh)
-        self.solid_fcn3 = tf.keras.layers.Dense(3, input_shape=(None, 6))
+        self.fluid_fcn0 = tf.keras.layers.Dense(18, input_shape=(None, 9), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.fluid_fcn1 = tf.keras.layers.Dense(9, input_shape=(None, 18), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.fluid_fcn2 = tf.keras.layers.Dense(6, input_shape=(None, 9), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.fluid_fcn3 = tf.keras.layers.Dense(3, input_shape=(None, 6), trainable=trainable)
+        self.solid_fcn0 = tf.keras.layers.Dense(18, input_shape=(None, 6), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.solid_fcn1 = tf.keras.layers.Dense(9, input_shape=(None, 18), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.solid_fcn2 = tf.keras.layers.Dense(6, input_shape=(None, 9), activation=tf.keras.activations.tanh, trainable=trainable)
+        self.solid_fcn3 = tf.keras.layers.Dense(3, input_shape=(None, 6), trainable=trainable)
 
     def call(self, inputs, training=None, mask=None):  # [(m1, cp1), (m2, cp2)...]
         mask, center_particle, current_data = inputs
@@ -65,6 +66,7 @@ class SlowFluidNet(tf.keras.Model):
             pred = tf.constant([0, -9.8, 0], shape=[3, ]) + pred  # (3,)
         return pred
 
+    @tf.function(experimental_relax_shapes=True)
     def pred(self, fluid_part, solid_part):
         with tf.device('/gpu:0'):
             y = self.solid_fcn0(solid_part)

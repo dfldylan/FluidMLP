@@ -1,8 +1,9 @@
 from model import *
 from dataset import *
 import config as cfg
+from multiprocessing.dummy import Pool
 
-global_step = 0
+global_step = -1
 
 if __name__ == '__main__':
     pool = Pool()
@@ -26,15 +27,16 @@ if __name__ == '__main__':
     summary_writer = tf.summary.create_file_writer(cfg.log_folder)
 
     while True:
-        print('step ' + str(global_step), end='...')
+        print('step ' + str(global_step + 1), end='...')
         mask, center_particle, index, current_data = dataset.next_particles(pool)
         _inputs = mask, center_particle[:, :6], current_data[:, :7]
         _outputs = center_particle[:, 7:10]
         current_loss = train(model, inputs=_inputs, outputs=_outputs, optimizer=optimizer)
 
         global_step += 1
+        print(str(current_loss.numpy()), end='...')
         if global_step % 10 == 0:
-            print(str(current_loss.numpy()), end='...')
+            print('save', end='...')
             checkpoint.save(os.path.join(cfg.save_folder, str(global_step) + r'-model.ckpt'))
             with summary_writer.as_default():
                 tf.summary.scalar("loss", current_loss, step=global_step)
