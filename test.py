@@ -1,6 +1,6 @@
 import pandas as pd
-from files import *
-import config as cfg
+from main.files import *
+from main import config as cfg
 import numpy as  np
 from multiprocessing.dummy import Pool
 

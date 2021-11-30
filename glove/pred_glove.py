@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from model import *
-from dataset import *
-import config as cfg
-from hash import hash
+from main.model import *
+from main.dataset import *
+from main import config as cfg
+from utils.hash import hash
 import shutil
 import multiprocessing as mp
 
