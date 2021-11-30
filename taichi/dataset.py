@@ -1,9 +1,9 @@
+import numpy as np
+import os
 import os.path
 
-import numpy as np
 import config as cfg
-from files_taichi import *
-import os
+from files import *
 
 
 # import random

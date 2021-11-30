@@ -1,7 +1,8 @@
-from model import *
-from dataset_taichi import *
-import config as cfg
 from multiprocessing import Pool
+
+import config as cfg
+from dataset import *
+from model import *
 
 global_step = -1
 

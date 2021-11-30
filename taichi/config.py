@@ -1,10 +1,9 @@
+import numpy as np
 import os
 
-import numpy as np
-
 LEARNING_RATE = 0.001
-SAVE_FOLDER = r'./save_new'
-LOG_FOLDER = r'./tensorboard_new'
+SAVE_FOLDER = r'./save'
+LOG_FOLDER = r'./tensorboard'
 SAMPLE_FOLDER = r'/root/datasets/new'
 BATCH_SIZE = 64 * os.cpu_count()  # todo batch
 VOXEL_SIZE = 0.4
