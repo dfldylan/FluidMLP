@@ -19,6 +19,12 @@ if TAEGET_VEL:
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 os.makedirs(LOG_FOLDER, exist_ok=True)
 
+
+PRED_FOLDER = r'./pred'
+OUTPUT_FOLDER = None
+
+
+
 # readme
 # vel or acc
 # config.py -- save_folder, log_folder,

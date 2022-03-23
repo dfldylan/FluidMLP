@@ -75,8 +75,6 @@ class SlowFluidNet(tf.keras.Model):
             y = self.solid_fcn1(y)
             y = self.solid_fcn2(y)
             y = self.solid_fcn3(y)
-
-        with tf.device('/gpu:1'):
             x = self.fluid_fcn0(fluid_part)
             x = self.fluid_fcn1(x)
             x = self.fluid_fcn2(x)

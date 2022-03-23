@@ -14,9 +14,9 @@ class RotateClass:
         return x, y
 
 
-def build_data(table_data, label_data, voxel_size=None, no_out=False, dt=None, target_vel=False, random_rotate=False):
+def build_data(table_data, label_data=None, voxel_size=None, dt=None, target_vel=False, random_rotate=False):
     pos, vel, phase = table_data[:, :3], table_data[:, 3:6], table_data[:, 6:7]
-    if no_out:
+    if not label_data:
         out = np.zeros_like(pos)
     else:
         l_pos, l_vel, l_phase = label_data[:, :3], label_data[:, 3:6], label_data[:, 6:7]
@@ -45,6 +45,9 @@ def build_data(table_data, label_data, voxel_size=None, no_out=False, dt=None, t
 
 def get_data_from_file(file_path):
     df = pd.read_csv(file_path, dtype=float)
+    if df.isna().any(axis=None):
+        print('nan exist')
+        df = df[df.notna().all(axis=1)]
     return df.values
 
 
