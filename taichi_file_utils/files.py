@@ -1,46 +1,17 @@
 import numpy as np
 import os
 import pandas as pd
-import random
 
 
 class RotateClass:
-    def __init__(self, angel):
-        self.sin_theta, self.cos_theta = np.sin(angel), np.cos(angel)
+    def __init__(self):
+        self.angel = np.random.random() * 2 * np.pi
+        self.sin_theta, self.cos_theta = np.sin(self.angel), np.cos(self.angel)
 
     def __call__(self, x, y):
         x = x * self.cos_theta - y * self.sin_theta
         y = x * self.sin_theta + y * self.cos_theta
         return x, y
-
-
-def build_data(table_data, label_data=None, voxel_size=None, dt=None, target_vel=False, random_rotate=False):
-    pos, vel, phase = table_data[:, :3], table_data[:, 3:6], table_data[:, 6:7]
-    if not label_data:
-        out = np.zeros_like(pos)
-    else:
-        l_pos, l_vel, l_phase = label_data[:, :3], label_data[:, 3:6], label_data[:, 6:7]
-        if not np.all(np.equal(phase, l_phase)):
-            print("change between two fps!")
-            return None
-        out = l_vel
-        # accel instead of vel
-        if not target_vel:
-            out -= vel
-            out /= dt
-
-    if random_rotate:
-        rotate = RotateClass(np.random.random() * 2 * np.pi)
-        pos[:, 0], pos[:, 2] = rotate(pos[:, 0], pos[:, 2])
-        vel[:, 0], vel[:, 2] = rotate(vel[:, 0], vel[:, 2])
-        out[:, 0], out[:, 2] = rotate(out[:, 0], out[:, 2])
-
-    if voxel_size:
-        voxel = np.floor(pos * (1 / voxel_size)).astype(int)
-    else:
-        voxel = np.zeros_like(pos)
-    data = np.concatenate([pos, vel, phase, out, voxel], axis=1)
-    return data
 
 
 def get_data_from_file(file_path):
@@ -75,13 +46,17 @@ def find_files(root_path, range_up=None, range_down=None, scene_num=None):
             files_path += (os.path.join(path, file) for file in files)
         else:
             for file in files:
-                fps = int(file.split(r'.')[0].split(r'_')[-1])
+                fps = int(file.split(r'.')[0])
                 if range_up is not None and fps >= range_up:
                     continue
                 if range_down is not None and fps < range_down:
                     continue
                 files_path.append(os.path.join(path, file))
     return files_path
+
+
+def get_fps_from_filename(filename):
+    return int(os.path.basename(filename).split('.')[0])
 
 
 if __name__ == '__main__':

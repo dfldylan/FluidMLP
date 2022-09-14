@@ -1,12 +1,10 @@
-import numpy as np
-import os
 import os.path
 
 import config as cfg
-from files import *
+from taichi_file_utils.files import *
 
 
-# import random
+import random
 
 class DataSet(object):
     def __init__(self):
@@ -23,7 +21,7 @@ class DataSet(object):
                 break
 
 
-        self.current_data = build_data(get_data_from_file(select_file), get_data_from_file(label_file), voxel_size=cfg.VOXEL_SIZE,
+        self.current_data = self._build_data(get_data_from_file(select_file), get_data_from_file(label_file), voxel_size=cfg.VOXEL_SIZE,
                                        target_vel=cfg.TAEGET_VEL, dt=cfg.DT, random_rotate=cfg.RANDOM_ROTATE)
         # find fluid indices
         fluid_mask = self.current_data[:, 6] > 0
@@ -34,6 +32,34 @@ class DataSet(object):
         ret = pool.map(self._find_neighbor_random, range(select_num))  # [(m1, cp1, i1), (m2, cp2, i2)...]
         mask, index = np.array([item[0] for item in ret]), np.array([item[1] for item in ret])
         return mask, index, self.current_data
+
+    def _build_data(self, table_data, label_data=None, voxel_size=None, dt=None, target_vel=False, random_rotate=False):
+        pos, vel, phase = table_data[:, :3], table_data[:, 3:6], table_data[:, 6:7]
+        if not label_data:
+            out = np.zeros_like(pos)
+        else:
+            l_pos, l_vel, l_phase = label_data[:, :3], label_data[:, 3:6], label_data[:, 6:7]
+            if not np.all(np.equal(phase, l_phase)):
+                print("change between two fps!")
+                return None
+            out = l_vel
+            # accel instead of vel
+            if not target_vel:
+                out -= vel
+                out /= dt
+
+        if random_rotate:
+            rotate = RotateClass()
+            pos[:, 0], pos[:, 2] = rotate(pos[:, 0], pos[:, 2])
+            vel[:, 0], vel[:, 2] = rotate(vel[:, 0], vel[:, 2])
+            out[:, 0], out[:, 2] = rotate(out[:, 0], out[:, 2])
+
+        if voxel_size:
+            voxel = np.floor(pos * (1 / voxel_size)).astype(int)
+        else:
+            voxel = np.zeros_like(pos)
+        data = np.concatenate([pos, vel, phase, out, voxel], axis=1)
+        return data
 
     def _find_neighbor_random(self, i):
         index = random.choice(self.fluid_indices)
