@@ -1,0 +1,1 @@
+`Du F, Ban X, Zhang Y, et al. FluidMLP: A general method for learning Lagrangian fluid simulation[J]. Simulation Modelling Practice and Theory, 2022, 120: 102623.`
